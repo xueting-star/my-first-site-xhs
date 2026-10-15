@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>大家最近怎么说 · 交互原型演示（探店）</title>
+<style>
+:root{
+  --red:#ff2442;--ink:#1a1417;--ink2:#5b5560;--ink3:#9a93a0;
+  --line:#e8e2df;--blue:#4f6df5;--amber:#d97e00;--green:#0ca77d;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  color:var(--ink);background:#f2eeeb;
+  font-family:"SF Pro Display","PingFang SC","Microsoft YaHei",Inter,system-ui,sans-serif;
+  min-height:100vh;-webkit-font-smoothing:antialiased;
+}
+.demo-tag{position:fixed;top:14px;right:16px;z-index:60;font-size:11px;font-weight:700;
+  color:var(--red);border:1px solid rgba(255,36,66,.32);background:#fff;
+  padding:6px 12px}
+
+/* ---------- 桌面舞台 ---------- */
+.stage{display:flex;gap:44px;justify-content:center;align-items:flex-start;
+  max-width:1180px;margin:0 auto;padding:42px 28px 56px}
+
+/* ---------- 手机（方角内容，仅外壳保留必要圆角裁切） ---------- */
+.phone{width:384px;flex:0 0 384px;height:800px;background:#17171a;
+  border:9px solid #17171a;border-radius:30px;position:relative;
+  box-shadow:0 30px 70px rgba(35,20,28,.28);overflow:hidden}
+.screen{height:100%;background:#fff;overflow:auto;scrollbar-width:none}
+.screen::-webkit-scrollbar{display:none}
+.status{height:44px;padding:14px 24px 0;display:flex;justify-content:space-between;
+  align-items:center;font-size:12px;font-weight:800;position:sticky;top:0;
+  background:#fff;z-index:9}
+.status .right{display:flex;align-items:center;gap:5px;font-size:11px}
+.batt{width:22px;height:11px;border:1.5px solid #1a1417;border-radius:2px;position:relative;padding:1px}
+.batt::after{content:"";position:absolute;right:-3px;top:3px;width:2px;height:5px;background:#1a1417}
+.batt i{display:block;height:100%;width:78%;background:#1a1417}
+
+.pg{display:none}
+.pg.on{display:block;animation:slideIn .3s ease}
+@keyframes slideIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+
+/* ===== 笔记详情页（恢复最初版式：图片通栏、方角、无底栏） ===== */
+.author{display:flex;align-items:center;gap:10px;padding:11px 16px 10px}
+.avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(145deg,#ffc0cb,#e77391);
+  display:grid;place-items:center;color:#fff;font-weight:800;font-size:14px}
+.author b{font-size:13.5px}
+.author small{display:block;color:#a39aa3;font-size:10.5px;margin-top:2px}
+.follow{margin-left:auto;border:1px solid var(--red);color:var(--red);
+  padding:5px 14px;font-size:11.5px;font-weight:700;background:#fff}
+.hero{height:236px;background:linear-gradient(rgba(15,9,8,.04),rgba(15,9,8,.18)),
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='420'%3E%3Cdefs%3E%3ClinearGradient id='g' x2='1' y2='1'%3E%3Cstop stop-color='%23dcbfa8'/%3E%3Cstop offset='1' stop-color='%2381685e'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='800' height='420' fill='url(%23g)'/%3E%3Ccircle cx='610' cy='108' r='88' fill='%23f5dfbd' opacity='.6'/%3E%3Crect x='90' y='205' width='620' height='110' fill='%235c4038'/%3E%3Ccircle cx='280' cy='190' r='54' fill='%23e8d5be'/%3E%3Ccircle cx='505' cy='185' r='48' fill='%23c8a985'/%3E%3C/svg%3E") center/cover;
+  display:grid;place-items:center;color:#fff;font-size:12px;text-shadow:0 1px 4px rgba(0,0,0,.45)}
+.note-body{padding:15px 16px 6px}
+.note-body h2{font-size:17px;line-height:1.4;margin:0 0 9px;letter-spacing:-.01em}
+.note-body .txt{font-size:13px;line-height:1.8;color:var(--ink)}
+.note-body .txt em{font-style:normal;color:var(--red)}
+.datebar{padding:8px 16px 12px;font-size:11.5px;color:#a39aa3;border-bottom:1px solid var(--line)}
+.cmt-count{padding:13px 16px 4px;font-size:14px;font-weight:800}
+
+/* AI 卡片（方角） */
+.ai-card{margin:8px 12px 14px;border:1px solid #f2dcdf;background:#fffafa}
+.ai-hd{display:flex;align-items:center;gap:8px;padding:12px 13px;border-bottom:1px solid #f5e6e8}
+.ai-hd .ic{width:22px;height:22px;background:var(--red);color:#fff;display:grid;place-items:center;font-size:12px}
+.ai-hd .t{font-size:13.5px;font-weight:800}
+.ai-hd .pill{margin-left:auto;font-size:10.5px;color:var(--red);border:1px solid rgba(255,36,66,.35);
+  padding:3px 9px;background:#fff}
+.cat{cursor:pointer;padding:12px 13px;border-bottom:1px solid #f5e6e8;transition:.15s}
+.cat:last-of-type{border-bottom:0}
+.cat:hover{background:#fff3f4}
+.cat.on{background:#ffeef0}
+.cat-top{display:flex;align-items:center;gap:8px}
+.cat-top .ic{width:20px;height:20px;font-size:11px;display:grid;place-items:center;color:#fff}
+.cat.change .ic{background:var(--red)}
+.cat.view .ic{background:var(--blue)}
+.cat.warn .ic{background:var(--amber)}
+.cat-top b{font-size:13px}
+.cat .sum{font-size:12.5px;line-height:1.7;color:var(--ink);margin-top:7px}
+.cat .lnk{font-size:11.5px;color:var(--blue);margin-top:6px}
+.ai-foot{font-size:10px;color:#b3aab0;padding:9px 13px;background:#fdf7f7;border-top:1px solid #f5e6e8}
+.hint{padding:10px 16px 22px;font-size:11px;color:#b3aab0;text-align:center}
+
+/* ===== 展开页 ===== */
+.sub-hd{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(--line);
+  position:sticky;top:0;background:#fff;z-index:9}
+.back{font-size:24px;color:var(--ink);cursor:pointer;width:28px;line-height:1;user-select:none}
+.sub-hd .ttl{font-size:14.5px;font-weight:800}
+.sub-hd .sub{font-size:10.5px;color:#a39aa3;margin-top:2px}
+.etabs{display:flex;border-bottom:1px solid var(--line);position:sticky;top:57px;background:#fff;z-index:8}
+.etab{flex:1;text-align:center;padding:11px 0;font-size:12.5px;color:var(--ink2);cursor:pointer;
+  border-bottom:2px solid transparent}
+.etab.on{color:var(--red);font-weight:800;border-bottom-color:var(--red)}
+.items{padding:14px 16px 8px}
+.item{border:1px solid var(--line);padding:12px 13px;margin-bottom:11px;background:#fff}
+.item .lab{font-size:10.5px;font-weight:800;margin-bottom:6px}
+.item.change .lab{color:var(--red)}.item.view .lab{color:var(--blue)}.item.warn .lab{color:var(--amber)}
+.item .body{font-size:12.5px;line-height:1.7;color:var(--ink)}
+.item .ev{margin-top:8px;font-size:11px;color:#8a828e;border-top:1px dashed var(--line);padding-top:7px}
+.src-btn{margin:4px 16px 20px;border:1px solid var(--red);color:var(--red);background:#fff;
+  padding:12px;text-align:center;font-size:13px;font-weight:700;cursor:pointer}
+.src-btn:hover{background:#fff4f6}
+
+/* ===== 来源页 ===== */
+.src-q{font-size:12px;color:var(--ink2);background:#f5f1ef;padding:10px 12px;margin:12px 16px 6px;line-height:1.6}
+.cmt{padding:11px 16px;border-bottom:1px solid var(--line)}
+.cmt .who{font-size:11.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+.cmt .who .badge{font-size:8.5px;font-weight:800;color:#fff;background:var(--green);padding:1px 5px}
+.cmt .who .badge.new{background:var(--blue)}
+.cmt .body{font-size:12.5px;line-height:1.6;margin-top:5px}
+.cmt .when{font-size:10px;color:#b3aab0;margin-top:4px}
+.leave-hint{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--line);
+  padding:11px 16px;font-size:11.5px;color:var(--red);text-align:center;cursor:pointer}
+
+/* ===== 反馈弹窗 ===== */
+.mask{position:absolute;inset:0;background:rgba(20,12,16,.42);z-index:40;display:none;align-items:flex-end}
+.mask.show{display:flex;animation:fade .2s}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.sheet{background:#fff;width:100%;padding:16px 18px 24px;animation:rise .28s ease}
+@keyframes rise{from{transform:translateY(100%)}to{transform:none}}
+.sheet .grab{width:38px;height:4px;background:#e2dcd9;margin:0 auto 13px}
+.sheet h4{margin:0 0 4px;font-size:14px}
+.sheet p{margin:0 0 13px;font-size:11.5px;color:#a39aa3}
+.fb-row{display:flex;gap:11px}
+.fb-opt{flex:1;border:1px solid var(--line);padding:13px 0;text-align:center;cursor:pointer;
+  font-size:13px;font-weight:700;background:#fff;transition:.2s}
+.fb-opt.yes:hover{border-color:var(--green);color:var(--green)}
+.fb-opt.no:hover{border-color:var(--red);color:var(--red)}
+.reasons{display:none;margin-top:14px}
+.reasons.show{display:block}
+.reasons .rt{font-size:11px;color:var(--ink2);margin-bottom:9px}
+.rchip{display:inline-block;border:1px solid var(--line);padding:7px 12px;margin:0 7px 9px 0;
+  font-size:12px;cursor:pointer;background:#fff}
+.rchip.sel{background:var(--red);color:#fff;border-color:var(--red)}
+.fb-submit{margin-top:6px;border:1px solid var(--red);color:var(--red);background:#fff;
+  padding:11px 0;text-align:center;font-size:12.5px;font-weight:700;cursor:pointer}
+
+.toast{position:absolute;left:50%;bottom:36px;transform:translateX(-50%) translateY(16px);
+  background:rgba(26,20,23,.92);color:#fff;font-size:12px;padding:9px 15px;
+  z-index:50;opacity:0;transition:.25s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ---------- AI 决策轨迹面板 ---------- */
+.trace{width:440px;flex:0 0 440px;position:sticky;top:42px;align-self:flex-start}
+.trace-card{border:1px solid var(--line);background:#fff;box-shadow:0 18px 50px rgba(47,30,38,.08)}
+.trace-hd{padding:17px 20px 15px;border-bottom:1px solid var(--line);background:#fffafa}
+.trace-hd .eyebrow{font-size:10px;font-weight:800;letter-spacing:.16em;color:var(--red)}
+.trace-hd h3{margin:6px 0 5px;font-size:17px;letter-spacing:-.01em}
+.trace-hd p{margin:0;font-size:11.5px;color:var(--ink2);line-height:1.65}
+.ttabs{display:flex;border-bottom:1px solid var(--line)}
+.ttab{flex:1;padding:11px 6px;text-align:center;cursor:pointer;background:#fff;border-right:1px solid var(--line)}
+.ttab:last-child{border-right:0}
+.ttab .k{font-size:12px;font-weight:700;color:var(--ink2)}
+.ttab .d{font-size:9.5px;color:var(--ink3);margin-top:3px}
+.ttab.change.on{background:#fff2f3;box-shadow:inset 0 -2px 0 var(--red)}
+.ttab.change.on .k{color:var(--red)}
+.ttab.view.on{background:#f1f4ff;box-shadow:inset 0 -2px 0 var(--blue)}
+.ttab.view.on .k{color:var(--blue)}
+.ttab.warn.on{background:#fff7ea;box-shadow:inset 0 -2px 0 var(--amber)}
+.ttab.warn.on .k{color:var(--amber)}
+.tbody{padding:17px 20px 20px;display:none}
+.tbody.on{display:block;animation:slideIn .25s}
+.pipe{position:relative;padding-left:25px}
+.pipe::before{content:"";position:absolute;left:7px;top:5px;bottom:5px;width:2px;background:var(--line)}
+.step{position:relative;margin-bottom:14px}
+.step:last-child{margin-bottom:0}
+.step .node{position:absolute;left:-25px;top:1px;width:15px;height:15px;background:#fff;
+  border:2px solid var(--ink3);display:grid;place-items:center;font-size:8px;font-weight:800;color:var(--ink2)}
+.step.change .node{border-color:var(--red);color:var(--red)}
+.step.view .node{border-color:var(--blue);color:var(--blue)}
+.step.warn .node{border-color:var(--amber);color:var(--amber)}
+.step .op{font-size:11px;font-weight:800;letter-spacing:.02em}
+.step.change .op{color:var(--red)}.step.view .op{color:var(--blue)}.step.warn .op{color:var(--amber)}
+.step .ds{font-size:11.5px;color:var(--ink2);line-height:1.6;margin-top:3px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-size:10.5px;background:#f5f1ef;padding:4px 8px;color:var(--ink2);line-height:1.4}
+.chip b{color:var(--ink)}
+.out{margin-top:14px;font-size:12px;line-height:1.7;background:#fff8f8;border:1px solid #f2dcdf;padding:12px 13px}
+.out .lt{font-size:10px;font-weight:800;color:var(--red);letter-spacing:.05em;margin-bottom:5px;display:block}
+
+/* 单页截图模式（?solo） */
+body.solo .demo-tag,body.solo .trace{display:none}
+body.solo .stage{padding:0;margin:0;justify-content:flex-start;max-width:none}
+body.solo .phone{margin:20px}
+</style>
+</head>
+<body>
+<div class="demo-tag">示例数据 · 演示用，不对应真实笔记 / 店铺 / 用户</div>
+
+<div class="stage">
+  <!-- ============ 手机 ============ -->
+  <div class="phone">
+    <div class="status">
+      <span>9:41</span>
+      <span class="right"><span>📶</span><span>5G</span><span class="batt"><i></i></span></span>
+    </div>
+    <div class="screen">
+
+      <!-- 笔记详情页 -->
+      <div class="pg on" id="pg-note">
+        <div class="author">
+          <div class="avatar">柚</div>
+          <div><b>柚子探店日记</b><small>上海 · 探店博主</small></div>
+          <div class="follow">关注</div>
+        </div>
+        <div class="hero">咖啡店内景 · 配图</div>
+        <div class="note-body">
+          <h2>愚园路这家咖啡店，工作日下午完全不用排队！</h2>
+          <div class="txt">藏在弄堂里的小店，<em>#上海探店 #咖啡</em><br>
+            工作日下午三点去的，店里只有两个人，超安静。手冲耶加雪菲 32 元，性价比很高，二楼靠窗的位置光线特别好，适合办公。老板说平时工作日都不用等，周末会稍微多一点。</div>
+        </div>
+        <div class="datebar">2025-03-12 · 上海</div>
+        <div class="cmt-count">共 1,247 条评论</div>
+        <div class="ai-card">
+          <div class="ai-hd">
+            <span class="ic">💬</span>
+            <span class="t">大家最近怎么说</span>
+            <span class="pill">近 90 天 · 38 条</span>
+          </div>
+          <div class="cat change" id="cat-change" onclick="selectCat('change')">
+            <div class="cat-top"><span class="ic">🔄</span><b>近期变化</b></div>
+            <div class="sum">近 30 天有 12 条评论提到「周末排队 40 分钟起」，比原帖描述明显变长；另有评论提到手冲涨价、二楼改为包间。</div>
+            <div class="lnk">来自 12 条近期评论 · 查看</div>
+          </div>
+          <div class="cat view" id="cat-view" onclick="selectCat('view')">
+            <div class="cat-top"><span class="ic">⚖️</span><b>不同观点</b></div>
+            <div class="sum">对「是否适合办公」存在分歧：有用户认为安静、适合带电脑；也有用户反馈周末偏吵、靠窗位少。</div>
+            <div class="lnk">来自 9 条近期评论 · 查看</div>
+          </div>
+          <div class="cat warn" id="cat-warn" onclick="selectCat('warn')">
+            <div class="cat-top"><span class="ic">⚠️</span><b>避坑提醒</b></div>
+            <div class="sum">多条评论提到「下午 5 点后网红甜品常售罄」「二楼包间需提前预约」。</div>
+            <div class="lnk">来自 7 条近期评论 · 查看</div>
+          </div>
+          <div class="ai-foot">AI 整理自近期评论，仅供参考</div>
+        </div>
+        <div class="hint">点任一条摘要展开详情，右侧同步显示 AI 决策轨迹</div>
+      </div>
+
+      <!-- 展开页 -->
+      <div class="pg" id="pg-expand">
+        <div class="sub-hd">
+          <span class="back" onclick="goNote()">‹</span>
+          <div><div class="ttl" id="ex-ttl">近期变化</div><div class="sub" id="ex-sub">近 30 天评论整理</div></div>
+        </div>
+        <div class="etabs">
+          <div class="etab" data-t="change" onclick="switchCat('change')">近期变化</div>
+          <div class="etab" data-t="view" onclick="switchCat('view')">不同观点</div>
+          <div class="etab" data-t="warn" onclick="switchCat('warn')">避坑提醒</div>
+        </div>
+        <div class="items" id="ex-items"></div>
+        <div class="src-btn" onclick="openSource()">查看来源 › 跳转到原始评论</div>
+      </div>
+
+      <!-- 来源页 -->
+      <div class="pg" id="pg-source">
+        <div class="sub-hd">
+          <span class="back" onclick="leaveSource()">‹</span>
+          <div><div class="ttl">来源评论</div><div class="sub" id="src-sub">共 4 条 · 按时间倒序</div></div>
+        </div>
+        <div class="src-q" id="src-q">近 30 天多条评论提到「周末排队 40 分钟起」</div>
+        <div class="cmt"><div class="who">小满 <span class="badge">高赞</span></div>
+          <div class="body">上周去手冲已经 38 了，比以前贵了一截，但豆子确实换好的了。</div><div class="when">9 天前 · 赞 1,204</div></div>
+        <div class="cmt"><div class="who">Tina <span class="badge new">最新</span></div>
+          <div class="body">二楼现在变成包间了，散客坐不了，想坐窗边只能在一楼碰运气。</div><div class="when">2 天前 · 赞 86</div></div>
+        <div class="cmt"><div class="who">林同学</div>
+          <div class="body">工作日去真的没人，周末建议错峰，十一点半之后就要等。</div><div class="when">5 天前 · 赞 432</div></div>
+        <div class="cmt"><div class="who">Aria</div>
+          <div class="body">下午去脏脏包没了，想吃的姐妹早点，五点后基本空柜。</div><div class="when">3 天前 · 赞 257</div></div>
+        <div class="leave-hint" onclick="leaveSource()">‹ 点此返回，触发反馈弹窗</div>
+      </div>
+
+    </div><!-- /screen -->
+
+    <!-- 反馈弹窗 -->
+    <div class="mask" id="fbMask">
+      <div class="sheet">
+        <div class="grab"></div>
+        <h4>这条近况对你有用吗？</h4>
+        <p>你的反馈会帮 AI 越整理越准（单日最多 2 次）</p>
+        <div class="fb-row">
+          <div class="fb-opt yes" onclick="fb('yes')">👍 有用</div>
+          <div class="fb-opt no" onclick="fb('no')">👎 没用</div>
+        </div>
+        <div class="reasons" id="fbReasons">
+          <div class="rt">哪里没帮到你？（可多选）</div>
+          <span class="rchip" onclick="toggleR(this)">信息过时</span>
+          <span class="rchip" onclick="toggleR(this)">与原文不符</span>
+          <span class="rchip" onclick="toggleR(this)">遗漏重要信息</span>
+          <span class="rchip" onclick="toggleR(this)">表述不清楚</span>
+          <div class="fb-submit" onclick="fbSubmit()">提交反馈</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <!-- ============ AI 决策轨迹 ============ -->
+  <div class="trace">
+    <div class="trace-card">
+      <div class="trace-hd">
+        <div class="eyebrow">AI DECISION TRACE</div>
+        <h3>AI 决策轨迹</h3>
+        <p>三类摘要各自走独立生成链路，每条结论都可回链原始评论。点左侧任一条摘要，这里同步切换。</p>
+      </div>
+      <div class="ttabs">
+        <div class="ttab change on" data-t="change" onclick="switchTrace('change')"><div class="k">近期变化</div><div class="d">变更信号提取</div></div>
+        <div class="ttab view" data-t="view" onclick="switchTrace('view')"><div class="k">不同观点</div><div class="d">观点聚类平衡</div></div>
+        <div class="ttab warn" data-t="warn" onclick="switchTrace('warn')"><div class="k">避坑提醒</div><div class="d">高频风险排序</div></div>
+      </div>
+
+      <div class="tbody change on" id="tb-change">
+        <div class="pipe">
+          <div class="step change"><div class="node">1</div><div class="op">RETRIEVE · 检索近 30 天评论</div><div class="ds">拉取该笔记近 30 天新增评论，过滤广告与无意义内容。</div></div>
+          <div class="step change"><div class="node">2</div><div class="op">TIME-DECAY · 时间衰减加权</div><div class="ds">越近的评论权重越高，避免旧信息长期占据摘要。</div></div>
+          <div class="step change"><div class="node">3</div><div class="op">EXTRACT · 提取变更信号</div><div class="ds">识别排队、价格、空间等变化，与原帖正文比对。</div>
+            <div class="chips"><span class="chip"><b>排队</b> 不用等 → 40 分钟起</span><span class="chip"><b>手冲</b> 32 → 38 元</span><span class="chip"><b>二楼</b> 公共座 → 包间</span></div></div>
+          <div class="step change"><div class="node">4</div><div class="op">GROUND · 锚定原文</div><div class="ds">每条变更至少命中 2 条原始评论，否则不输出。</div></div>
+          <div class="step change"><div class="node">✓</div><div class="op">OUTPUT · 生成克制表述</div><div class="ds">只陈述变化、不做价值判断，附来源回链。</div></div>
+        </div>
+        <div class="out"><span class="lt">最终输出</span>近 30 天，多条评论提到周末排队 40 分钟起（原帖称工作日不用排队）；手冲由 32 元调整为 38 元；二楼公共座位改为包间。来源：小满、Tina 等评论。</div>
+      </div>
+
+      <div class="tbody view" id="tb-view">
+        <div class="pipe">
+          <div class="step view"><div class="node">1</div><div class="op">RETRIEVE · 检索相关评论</div><div class="ds">汇总对该店体验的主观评价，区分事实描述与情绪表达。</div></div>
+          <div class="step view"><div class="node">2</div><div class="op">CLUSTER · 观点聚类</div><div class="ds">按「环境 / 出品 / 人流」维度归为正向、负向、中立三类。</div>
+            <div class="chips"><span class="chip">安静适合办公 ✓</span><span class="chip">周末偏吵 ✕</span><span class="chip">出品稳定 ±</span></div></div>
+          <div class="step view"><div class="node">3</div><div class="op">BALANCE · 平衡呈现</div><div class="ds">正反方并列展示，平台不做倾向判断，不放大冲突。</div></div>
+          <div class="step view"><div class="node">4</div><div class="op">GROUND · 锚定双方原文</div><div class="ds">正向、负向各至少命中 1 条原文评论。</div></div>
+          <div class="step view"><div class="node">✓</div><div class="op">OUTPUT · 生成克制表述</div><div class="ds">呈现分歧而非下结论，提示用户结合自身需求判断。</div></div>
+        </div>
+        <div class="out"><span class="lt">最终输出</span>关于环境：有用户认为安静适合办公，也有用户反馈周末偏吵、靠窗位少。建议结合自己的使用场景判断。来源：林同学等评论。</div>
+      </div>
+
+      <div class="tbody warn" id="tb-warn">
+        <div class="pipe">
+          <div class="step warn"><div class="node">1</div><div class="op">RETRIEVE · 检索高频提及</div><div class="ds">扫描评论中对「踩雷 / 注意」类内容的提及。</div></div>
+          <div class="step warn"><div class="node">2</div><div class="op">FREQ · 频次阈值过滤</div><div class="ds">仅保留被多条评论提及的提醒，过滤偶发个例，降低误报。</div></div>
+          <div class="step warn"><div class="node">3</div><div class="op">SEVERITY · 严重程度排序</div><div class="ds">按影响出行决策的紧迫度排序。</div>
+            <div class="chips"><span class="chip">甜品售罄</span><span class="chip">包间需预约</span></div></div>
+          <div class="step warn"><div class="node">4</div><div class="op">GROUND · 锚定原文</div><div class="ds">每条提醒命中原始评论，点击可回链。</div></div>
+          <div class="step warn"><div class="node">✓</div><div class="op">OUTPUT · 生成克制表述</div><div class="ds">用「有用户提到」客观陈述，不说「一定」「绝对」。</div></div>
+        </div>
+        <div class="out"><span class="lt">最终输出</span>有用户提到：下午 5 点后脏脏包等网红甜品常售罄，想吃需早到；二楼包间需提前 1 天预约。来源：Aria、Tina 等评论。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var DATA = {
+  change:{
+    ttl:"近期变化", sub:"近 30 天评论整理",
+    q:"多条评论提到「周末排队变长、手冲涨价、二楼改包间」",
+    items:[
+      {lab:"人流变化",cls:"change",body:"近 30 天有 12 条评论提到「周末排队 40 分钟起」，与原帖「工作日下午不用排队」形成明显反差。",ev:"来源：林同学「十一点半之后就要等」"},
+      {lab:"价格调整",cls:"change",body:"手冲单品由 32 元调整为 38 元，近 30 天 6 条评论提及。",ev:"来源：小满「上周去手冲已经 38 了」"},
+      {lab:"空间改动",cls:"change",body:"二楼原公共座位区改为独立包间，散客不可坐。",ev:"来源：Tina「二楼现在变成包间了，散客坐不了」"}
+    ]
+  },
+  view:{
+    ttl:"不同观点", sub:"评论区观点聚类",
+    q:"评论区对「环境是否适合办公」存在分歧",
+    items:[
+      {lab:"支持方",cls:"view",body:"多人认为环境安静、座位舒适，适合带电脑办公。",ev:"来源：多条高赞评论提及「安静」「能坐一下午」"},
+      {lab:"反对方",cls:"view",body:"部分用户反馈周末音乐声大、靠窗位少，体验打折扣。",ev:"来源：评论提及「周末有点吵」「窗边抢不到」"},
+      {lab:"中立",cls:"view",body:"认为出品稳定但创新较少，属于「稳定但不惊艳」一类。",ev:"来源：评论提及「豆子稳，但没新意」"}
+    ]
+  },
+  warn:{
+    ttl:"避坑提醒", sub:"高频提及的踩雷点",
+    q:"多条评论提到「甜品售罄、包间需预约」",
+    items:[
+      {lab:"甜品售罄",cls:"warn",body:"下午 5 点后脏脏包等网红甜品常售罄，想吃要早到。",ev:"来源：Aria「五点后基本空柜」"},
+      {lab:"包间预约",cls:"warn",body:"二楼包间需提前 1 天预约，临时到店无法使用。",ev:"来源：Tina「变成包间，散客坐不了」"}
+    ]
+  }
+};
+
+var curCat = 'change';
+var fbCount = 0;
+
+function show(id){
+  document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on')});
+  document.getElementById('pg-'+id).classList.add('on');
+}
+function switchTrace(t){
+  document.querySelectorAll('.ttab').forEach(function(x){x.classList.toggle('on', x.dataset.t===t)});
+  document.querySelectorAll('.tbody').forEach(function(x){x.classList.remove('on')});
+  document.getElementById('tb-'+t).classList.add('on');
+}
+function renderItems(t){
+  var d = DATA[t];
+  document.getElementById('ex-ttl').textContent = d.ttl;
+  document.getElementById('ex-sub').textContent = d.sub;
+  var box = document.getElementById('ex-items'); box.innerHTML='';
+  d.items.forEach(function(it){
+    var el=document.createElement('div');
+    el.className='item '+it.cls;
+    el.innerHTML='<div class="lab">'+it.lab+'</div><div class="body">'+it.body+'</div><div class="ev">'+it.ev+'</div>';
+    box.appendChild(el);
+  });
+}
+function switchCat(t){
+  curCat = t;
+  renderItems(t);
+  switchTrace(t);
+  document.querySelectorAll('.etab').forEach(function(x){x.classList.toggle('on', x.dataset.t===t)});
+  document.querySelectorAll('.cat').forEach(function(c){c.classList.remove('on')});
+  var cat = document.getElementById('cat-'+t); if(cat) cat.classList.add('on');
+}
+function selectCat(t){
+  switchCat(t);
+  show('expand');
+}
+function goNote(){
+  document.querySelectorAll('.cat').forEach(function(c){c.classList.remove('on')});
+  show('note');
+}
+function openSource(){
+  var d = DATA[curCat];
+  document.getElementById('src-q').textContent = d.q;
+  show('source');
+}
+function leaveSource(){
+  if(fbCount < 1){
+    fbCount++;
+    document.getElementById('fbMask').classList.add('show');
+  } else {
+    toast('已触发过反馈 · 本次直接返回（频控生效）');
+    show('expand');
+  }
+}
+function closeFeedback(){ document.getElementById('fbMask').classList.remove('show'); }
+function fb(kind){
+  if(kind==='yes'){
+    closeFeedback();
+    toast('感谢反馈 · 已记录「有用」');
+    setTimeout(function(){ show('expand'); }, 450);
+  } else {
+    document.getElementById('fbReasons').classList.add('show');
+  }
+}
+function toggleR(el){ el.classList.toggle('sel'); }
+function fbSubmit(){
+  closeFeedback();
+  toast('感谢反馈 · 已提交，将用于优化');
+  setTimeout(function(){ show('expand'); }, 450);
+}
+function toast(msg){
+  var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove('show')},2200);
+}
+document.getElementById('fbMask').addEventListener('click',function(e){ if(e.target===this) closeFeedback(); });
+
+if(location.search.indexOf('solo')>=0){ document.body.classList.add('solo'); }
+</script>
+</body>
+</html>
